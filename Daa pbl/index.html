@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Metro Station Routing and Fare Calculation</title>
+    <link rel="stylesheet" href="./styles.css">
+<script src="https://d3js.org/d3.v6.min.js"></script>
+</head>
+<body>
+    <h1>Metro Station Routing and Fare Calculation</h1>
+
+    <label for="source">Source Station:</label>
+    <select id="source"></select>
+
+    <label for="destination">Destination Station:</label>
+    <select id="destination"></select>
+
+    <button onclick="findRoute()">Find Route</button>
+
+    <div id="result"></div>
+
+    <script>
+        const metroStations = {
+            'Station A': {'Station B': 3, 'Station C': 5, 'Station D': 7, 'Station E': 8},
+            'Station B': {'Station A': 3, 'Station C': 2, 'Station D': 4, 'Station E': 6},
+            'Station C': {'Station A': 5, 'Station B': 2, 'Station D': 3, 'Station E': 4},
+            'Station D': {'Station A': 7, 'Station B': 4, 'Station C': 3, 'Station E': 2},
+            'Station E': {'Station A': 8, 'Station B': 6, 'Station C': 4, 'Station D': 2}
+        };
+
+        const sourceSelect = document.getElementById('source');
+        const destinationSelect = document.getElementById('destination');
+        const resultDiv = document.getElementById('result');
+
+        // Populate station dropdowns
+        Object.keys(metroStations).forEach(station => {
+            const option = document.createElement('option');
+            option.value = station;
+            option.text = station;
+            sourceSelect.add(option);
+            destinationSelect.add(option.cloneNode(true));
+        });
+
+        function dijkstra(graph, start, end) {
+            const distances = {};
+            const priorityQueue = [];
+
+            Object.keys(graph).forEach(station => {
+                distances[station] = Infinity;
+            });
+
+            distances[start] = 0;
+            priorityQueue.push({ station: start, distance: 0 });
+
+            while (priorityQueue.length > 0) {
+                priorityQueue.sort((a, b) => a.distance - b.distance);
+                const { station: currentStation, distance: currentDistance } = priorityQueue.shift();
+
+                if (currentDistance > distances[currentStation]) {
+                    continue;
+                }
+
+                for (const neighbor in graph[currentStation]) {
+                    const distance = currentDistance + graph[currentStation][neighbor];
+
+                    if (distance < distances[neighbor]) {
+                        distances[neighbor] = distance;
+                        priorityQueue.push({ station: neighbor, distance });
+                    }
+                }
+            }
+
+            return distances[end];
+        }
+
+        function findRoute() {
+            const sourceStation = sourceSelect.value;
+            const destinationStation = destinationSelect.value;
+
+            if (!sourceStation || !destinationStation) {
+                resultDiv.textContent = 'Invalid station selection.';
+                return;
+            }
+
+            const shortestPathDistance = dijkstra(metroStations, sourceStation, destinationStation);
+            const fare = 5 * shortestPathDistance;
+
+            const result = `Shortest path from ${sourceStation} to ${destinationStation} is ${shortestPathDistance} units.\nFare: $${fare.toFixed(2)}`;
+            resultDiv.textContent = result;
+        }
+    </script>
+</body>
+</html>
